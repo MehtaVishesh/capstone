@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recipe Recommender Test</title>
+</head>
+<body>
+    <h1>Recipe Recommender Test</h1>
+    <form id="recipeForm">
+        <label for="ingredients">Enter ingredients (comma-separated):</label><br>
+        <input type="text" id="ingredients" name="ingredients" value="cheese, onion"><br><br>
+        <input type="button" value="Get Recommendations" onclick="getRecommendations()">
+    </form>
+
+    <div id="recommendationsDiv"></div> <!-- Use "recommendationsDiv" as the ID -->
+
+    <script>
+        async function getRecommendations() {
+            var ingredientsInput = document.getElementById("ingredients");
+            var ingredients = ingredientsInput.value.split(',').map(function(item) {
+                return item.trim();
+            });
+
+            try {
+                const response = await fetch("http://127.0.0.1:500/recc", {
+                    method: "POST",
+                    body: JSON.stringify({ ingredients: ingredients }),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayRecommendations(data.recommendations.recommendations);
+                } else {
+                    console.error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            var recommendationsDiv = document.getElementById("recommendationsDiv");
+            recommendationsDiv.innerHTML = "<h2>Recommendations:</h2>";
+
+            if (recommendations && recommendations.length > 0) {
+                recommendations.forEach(function (recommendation, index) {
+                    var ingredients = JSON.parse(recommendation.ingredients);
+                    var recipe = JSON.parse(recommendation.recipe);
+                    var title = recommendation.title;
+
+                    recommendationsDiv.innerHTML += `<h3>${title}</h3>`;
+                    recommendationsDiv.innerHTML += "<h4>Ingredients:</h4>";
+                    ingredients.forEach(function (ingredient) {
+                        recommendationsDiv.innerHTML += `<p>${ingredient}</p>`;
+                    });
+                    recommendationsDiv.innerHTML += "<h4>Recipe:</h4>";
+                    recipe.forEach(function (step) {
+                        recommendationsDiv.innerHTML += `<p>${step}</p>`;
+                    });
+                });
+            } else {
+                recommendationsDiv.innerHTML += "<p>No recommendations found.</p>";
+            }
+        }
+    </script>
+</body>
+</html>
